@@ -78,6 +78,9 @@ public class Configuration {
 
   @ElementList(name = "exclusions", entry = "exclusion", required = false)
   public List<String> exclusions = new LinkedList<>();
+  
+  @ElementList(name = "excludedArtifacts", entry = "artifact", required = false)
+  public List<Artifact> excludedArtifacts = new LinkedList<>();
 
   @ElementList(name = "branchPolicies", entry = "branchPolicy", required = false)
   public List<BranchPolicy> branchPolicies = new LinkedList<>();

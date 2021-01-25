@@ -24,6 +24,8 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import org.apache.maven.MavenExecutionException;
 import org.junit.After;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -49,6 +51,20 @@ public class ConfigurationLoaderTest {
 
       assertThat(cfg.mavenLike, is(false));
       assertThat(cfg.useCommitDistance, is(true));
+    }
+  }
+  
+  @Test
+  public void test_excluded_artifacts() throws MavenExecutionException, IOException {
+    try (ResourceConfigurationProvider res = fromResource("/config/cfg.with.excludedArtifacts.xml")) {
+      Configuration cfg =
+          ConfigurationLoader.loadFromRoot(res.getConfigurationDirectory(), inMemoryLogger);
+      assertNotNull(cfg);
+      assertEquals(2, cfg.excludedArtifacts.size());
+      assertEquals("com.foo", cfg.excludedArtifacts.get(0).groupId);
+      assertEquals("bar", cfg.excludedArtifacts.get(0).artifactId);
+      assertEquals("com.bar", cfg.excludedArtifacts.get(1).groupId);
+      assertEquals("foo", cfg.excludedArtifacts.get(1).artifactId);
     }
   }
 

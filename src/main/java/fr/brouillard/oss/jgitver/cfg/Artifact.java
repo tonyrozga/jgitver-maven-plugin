@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package fr.brouillard.oss.jgitver;
+package fr.brouillard.oss.jgitver.cfg;
 
-import fr.brouillard.oss.jgitver.cfg.Configuration;
-import java.io.File;
-import java.io.IOException;
-import org.apache.maven.MavenExecutionException;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
-public interface JGitverConfiguration {
-  public Configuration getConfiguration() throws MavenExecutionException;
-
-  boolean ignoreArtifact(String groupId, String artifactId);
-  boolean ignore(File pomFile) throws IOException;
+/**
+ *
+ * @author anthony.rozga
+ */
+@XmlType
+@XmlAccessorType(XmlAccessType.FIELD)
+public class Artifact {
+    @XmlElement(name = "groupId")
+    public String groupId;
+    
+    @XmlElement(name = "artifactId")
+    public String artifactId;
 }

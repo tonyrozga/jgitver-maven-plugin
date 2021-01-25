@@ -15,6 +15,7 @@
  */
 package fr.brouillard.oss.jgitver;
 
+import fr.brouillard.oss.jgitver.cfg.Artifact;
 import fr.brouillard.oss.jgitver.cfg.Configuration;
 import fr.brouillard.oss.jgitver.cfg.ConfigurationLoader;
 import java.io.File;
@@ -72,13 +73,25 @@ public class JGitverConfigurationComponent implements JGitverConfiguration {
 
   @Override
   public boolean ignore(File pomFile) throws IOException {
+    boolean ignore = false;
     for (File excludedDir : excludedDirectories) {
       if (StringUtils.containsIgnoreCase(
           pomFile.getParentFile().getCanonicalFile().getCanonicalPath(),
           excludedDir.getCanonicalPath())) {
-        return true;
+        ignore = true;
       }
     }
-    return false;
+    logger.debug("ignore? " + pomFile.getCanonicalPath() + " = " + ignore);
+    return ignore;
+  }
+ 
+  @Override
+  public boolean ignoreArtifact(String groupId, String artifactId) {
+      Artifact ex = configuration.excludedArtifacts.stream()
+          .filter(a -> a.groupId.equals(groupId) && a.artifactId.equals(artifactId))
+          .findFirst().orElse(null);
+      
+      logger.debug("ignoreArtifact: " + groupId + ":" + artifactId + " ignore? " + (null != ex));
+      return null != ex; // we found a matching excluded Artifact
   }
 }

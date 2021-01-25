@@ -37,6 +37,7 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
+import org.apache.maven.model.Parent;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
 import org.apache.maven.model.Scm;
@@ -95,6 +96,16 @@ public class JGitverModelProcessor extends DefaultModelProcessor {
         return model;
       }
 
+      Parent parent = model.getParent();
+      String groupId = StringUtils.isBlank(model.getGroupId()) ? parent.getGroupId() : model.getGroupId();
+      logger.debug("checking artifact " + groupId + ":" + model.getArtifactId());
+      
+      if (configurationProvider.ignoreArtifact(groupId, model.getArtifactId())) {
+          logger.debug("config ignore artifact " + groupId + ":" + model.getArtifactId());
+          return model;
+      }
+      
+      logger.debug("checking Source.location: " + source.getLocation());
       File location = new File(source.getLocation());
       if (!location.isFile()) {
         // their JavaDoc says Source.getLocation "could be a local file path, a URI or just an empty

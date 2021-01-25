@@ -1,0 +1,15 @@
+<configuration>
+    <mavenLike>false</mavenLike>
+    <useCommitDistance>true</useCommitDistance>
+    
+    <excludedArtifacts>
+        <artifact>
+            <groupId>com.foo</groupId>
+            <artifactId>bar</artifactId>
+        </artifact>
+        <artifact>
+            <groupId>com.bar</groupId>
+            <artifactId>foo</artifactId>
+        </artifact>
+    </excludedArtifacts>
+</configuration>
