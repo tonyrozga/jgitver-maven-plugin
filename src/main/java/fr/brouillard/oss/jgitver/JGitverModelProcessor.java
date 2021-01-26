@@ -70,48 +70,57 @@ public class JGitverModelProcessor extends DefaultModelProcessor {
 
   @Override
   public Model read(File input, Map<String, ?> options) throws IOException {
+    logger.debug("read: " + input.getAbsolutePath());
     return provisionModel(super.read(input, options), options);
   }
 
   @Override
   public Model read(Reader input, Map<String, ?> options) throws IOException {
+    logger.debug("read: Reader");
     return provisionModel(super.read(input, options), options);
   }
 
   @Override
   public Model read(InputStream input, Map<String, ?> options) throws IOException {
+    logger.debug("read: InputStream");
+    
     return provisionModel(super.read(input, options), options);
   }
 
   private Model provisionModel(Model model, Map<String, ?> options) throws IOException {
+    
+    Parent parent = model.getParent();
+    String groupId = StringUtils.isBlank(model.getGroupId()) ? (null == parent ? null : parent.getGroupId()) : model.getGroupId();
+    logger.debug("provisionModel " + groupId + ":" + model.getArtifactId());
+    
+      
     MavenSession session = legacySupport.getSession();
     Optional<JGitverSession> optSession = jgitverSession.session();
     if (!optSession.isPresent()) {
       // don't do anything in case no jgitver is there (execution could have been skipped)
+      logger.debug("no jgitver, skipping");
       return model;
     } else {
 
       Source source = (Source) options.get(ModelProcessor.SOURCE);
       if (source == null) {
+        logger.debug("no source, skipping");
         return model;
       }
-
-      Parent parent = model.getParent();
-      String groupId = StringUtils.isBlank(model.getGroupId()) ? parent.getGroupId() : model.getGroupId();
-      logger.debug("checking artifact " + groupId + ":" + model.getArtifactId());
+      logger.debug("Source.location: " + source.getLocation());
       
       if (configurationProvider.ignoreArtifact(groupId, model.getArtifactId())) {
-          logger.debug("config ignore artifact " + groupId + ":" + model.getArtifactId());
+          logger.debug("configured to ignore artifact " + groupId + ":" + model.getArtifactId());
           return model;
       }
       
-      logger.debug("checking Source.location: " + source.getLocation());
       File location = new File(source.getLocation());
       if (!location.isFile()) {
         // their JavaDoc says Source.getLocation "could be a local file path, a URI or just an empty
         // string."
         // if it doesn't resolve to a file then calling .getParentFile will throw an exception,
         // but if it doesn't resolve to a file then it isn't under getMultiModuleProjectDirectory,
+        logger.debug("location is not a file, skipping");
         return model; // therefore the model shouldn't be modified.
       }
 
@@ -131,6 +140,11 @@ public class JGitverModelProcessor extends DefaultModelProcessor {
 
         jgitverSession.addProject(GAV.from(model.clone()));
 
+        if ("com.otterproducts.it.currency".equals(groupId)) {
+            model.getProperties().setProperty("build.number", calculatedVersion);
+        }
+        
+        /* tony removed for now
         if (Objects.nonNull(model.getVersion())) {
           // TODO evaluate how to set the version only when it was originally set in the pom file
           model.setVersion(calculatedVersion);
@@ -149,7 +163,8 @@ public class JGitverModelProcessor extends DefaultModelProcessor {
             model.getParent().setVersion(calculatedVersion);
           }
         }
-
+        */
+        
         // we should only register the plugin once, on the main project
         if (relativePath.getCanonicalPath().equals(multiModuleDirectory.getCanonicalPath())) {
           if (JGitverUtils.shouldUseFlattenPlugin(session)) {

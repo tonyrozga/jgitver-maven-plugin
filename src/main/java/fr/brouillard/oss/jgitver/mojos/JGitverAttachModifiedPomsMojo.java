@@ -42,6 +42,7 @@ public class JGitverAttachModifiedPomsMojo extends AbstractMojo {
 
   @Override
   public void execute() throws MojoExecutionException {
+    getLog().info("attach-modified-poms.execute");
     if (Objects.isNull(
         mavenSession.getUserProperties().get(JGitverUtils.SESSION_MAVEN_PROPERTIES_KEY))) {
       getLog()
