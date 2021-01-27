@@ -12,4 +12,6 @@
             <artifactId>foo</artifactId>
         </artifact>
     </excludedArtifacts>
+    
+    <setVersionAsProperty>build.number</setVersionAsProperty>
 </configuration>

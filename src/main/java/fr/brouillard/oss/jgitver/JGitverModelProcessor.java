@@ -70,20 +70,16 @@ public class JGitverModelProcessor extends DefaultModelProcessor {
 
   @Override
   public Model read(File input, Map<String, ?> options) throws IOException {
-    logger.debug("read: " + input.getAbsolutePath());
     return provisionModel(super.read(input, options), options);
   }
 
   @Override
   public Model read(Reader input, Map<String, ?> options) throws IOException {
-    logger.debug("read: Reader");
     return provisionModel(super.read(input, options), options);
   }
 
   @Override
   public Model read(InputStream input, Map<String, ?> options) throws IOException {
-    logger.debug("read: InputStream");
-    
     return provisionModel(super.read(input, options), options);
   }
 
@@ -92,7 +88,6 @@ public class JGitverModelProcessor extends DefaultModelProcessor {
     Parent parent = model.getParent();
     String groupId = StringUtils.isBlank(model.getGroupId()) ? (null == parent ? null : parent.getGroupId()) : model.getGroupId();
     logger.debug("provisionModel " + groupId + ":" + model.getArtifactId());
-    
       
     MavenSession session = legacySupport.getSession();
     Optional<JGitverSession> optSession = jgitverSession.session();
@@ -140,31 +135,32 @@ public class JGitverModelProcessor extends DefaultModelProcessor {
 
         jgitverSession.addProject(GAV.from(model.clone()));
 
-        if ("com.otterproducts.it.currency".equals(groupId)) {
-            model.getProperties().setProperty("build.number", calculatedVersion);
-        }
-        
-        /* tony removed for now
-        if (Objects.nonNull(model.getVersion())) {
-          // TODO evaluate how to set the version only when it was originally set in the pom file
-          model.setVersion(calculatedVersion);
-        }
+          // 2 modes: default sets version numbers, the other sets a property instead
+          String propertyForVersion = this.getPropertyForVersion(model);
+          if (StringUtils.isBlank(propertyForVersion)) {
+              if (Objects.nonNull(model.getVersion())) {
+                  // TODO evaluate how to set the version only when it was originally set in the pom file
+                  model.setVersion(calculatedVersion);
+              }
 
-        if (Objects.nonNull(model.getParent())) {
-          // if the parent is part of the multi module project, let's update the parent version
-          String modelParentRelativePath = model.getParent().getRelativePath();
-          File relativePathParent =
-              new File(relativePath.getCanonicalPath() + File.separator + modelParentRelativePath)
-                  .getParentFile()
-                  .getCanonicalFile();
-          if (StringUtils.isNotBlank(modelParentRelativePath)
-              && StringUtils.containsIgnoreCase(
-                  relativePathParent.getCanonicalPath(), multiModuleDirectory.getCanonicalPath())) {
-            model.getParent().setVersion(calculatedVersion);
+              if (Objects.nonNull(model.getParent())) {
+                  // if the parent is part of the multi module project, let's update the parent version
+                  String modelParentRelativePath = model.getParent().getRelativePath();
+                  File relativePathParent
+                    = new File(relativePath.getCanonicalPath() + File.separator + modelParentRelativePath)
+                    .getParentFile()
+                    .getCanonicalFile();
+                  if (StringUtils.isNotBlank(modelParentRelativePath)
+                    && StringUtils.containsIgnoreCase(
+                      relativePathParent.getCanonicalPath(), multiModuleDirectory.getCanonicalPath())) {
+                      model.getParent().setVersion(calculatedVersion);
+                  }
+              }
+          } else {
+              logger.debug("setting version: " + calculatedVersion + " as property: " + propertyForVersion);
+              model.getProperties().setProperty(propertyForVersion, calculatedVersion);
           }
-        }
-        */
-        
+ 
         // we should only register the plugin once, on the main project
         if (relativePath.getCanonicalPath().equals(multiModuleDirectory.getCanonicalPath())) {
           if (JGitverUtils.shouldUseFlattenPlugin(session)) {
@@ -294,6 +290,14 @@ public class JGitverModelProcessor extends DefaultModelProcessor {
   private boolean shouldSkipPomUpdate(Model model) throws IOException {
     try {
       return configurationProvider.getConfiguration().skipPomUpdate;
+    } catch (MavenExecutionException mee) {
+      throw new IOException("cannot load jgitver configuration", mee);
+    }
+  }
+  
+  private String getPropertyForVersion(Model model) throws IOException {
+    try {
+      return configurationProvider.getConfiguration().setVersionAsProperty;
     } catch (MavenExecutionException mee) {
       throw new IOException("cannot load jgitver configuration", mee);
     }

@@ -96,6 +96,9 @@ public class Configuration {
 
   @Element(required = false)
   public ScriptType scriptType;
+  
+  @Element(required = false)
+  public String setVersionAsProperty;
 
   public static final int UNSET_DEPTH = -1;
 }

@@ -65,6 +65,8 @@ public class ConfigurationLoaderTest {
       assertEquals("bar", cfg.excludedArtifacts.get(0).artifactId);
       assertEquals("com.bar", cfg.excludedArtifacts.get(1).groupId);
       assertEquals("foo", cfg.excludedArtifacts.get(1).artifactId);
+      
+      assertEquals("build.number", cfg.setVersionAsProperty);
     }
   }
 

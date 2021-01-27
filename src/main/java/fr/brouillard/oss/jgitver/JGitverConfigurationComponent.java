@@ -94,4 +94,9 @@ public class JGitverConfigurationComponent implements JGitverConfiguration {
       logger.debug("ignoreArtifact: " + groupId + ":" + artifactId + " ignore? " + (null != ex));
       return null != ex; // we found a matching excluded Artifact
   }
+  
+  @Override
+  public String getSetVersionAsProperty() {
+      return configuration.setVersionAsProperty;
+  }
 }

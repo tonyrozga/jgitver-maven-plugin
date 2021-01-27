@@ -25,4 +25,6 @@ public interface JGitverConfiguration {
 
   boolean ignoreArtifact(String groupId, String artifactId);
   boolean ignore(File pomFile) throws IOException;
+  
+  String getSetVersionAsProperty();
 }

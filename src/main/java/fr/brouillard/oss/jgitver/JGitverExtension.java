@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.execution.MavenSession;
@@ -51,7 +52,6 @@ public class JGitverExtension extends AbstractMavenLifecycleParticipant {
 
     @Override
     public void afterSessionStart(MavenSession mavenSession) throws MavenExecutionException {
-        logger.info("afterSessionStart");
         if (JGitverUtils.shouldSkip(mavenSession)) {
             logger.info("  jgitver execution has been skipped by request of the user");
             sessionHolder.setSession(null);
@@ -129,8 +129,6 @@ public class JGitverExtension extends AbstractMavenLifecycleParticipant {
                     .map(Boolean::parseBoolean)
                     .orElse(Boolean.FALSE);
 
-                logger.info("dirty? " + isDirty);
-
                 if (cfg.failIfDirty && isDirty) {
                     throw new IllegalStateException("repository is dirty");
                 }
@@ -141,15 +139,13 @@ public class JGitverExtension extends AbstractMavenLifecycleParticipant {
                     = JGitverUtils.versionOverride(mavenSession, logger)
                     .map(version -> Providers.fixVersion(version, finalInfoProvider))
                     .orElse(infoProvider);
-                logger.info("info provider setup");
-
+                
                 JGitverUtils.fillPropertiesFromMetadatas(
                     mavenSession.getUserProperties(), infoProvider, logger);
-                logger.info("fillPropsFromMetaData done");
-
+                
                 JGitverSession session = new JGitverSession(infoProvider, rootDirectory);
                 sessionHolder.setSession(session);
-                logger.info("session set");
+                
             } catch (Exception ex) {
                 logger.warn(
                     "cannot autoclose GitVersionCalculator object for project: " + rootDirectory, ex);
@@ -159,25 +155,21 @@ public class JGitverExtension extends AbstractMavenLifecycleParticipant {
 
     @Override
     public void afterSessionEnd(MavenSession session) throws MavenExecutionException {
-        logger.info("afterSessionEnd");
         sessionHolder.setSession(null);
     }
 
     @Override
     public void afterProjectsRead(MavenSession mavenSession) throws MavenExecutionException {
-        logger.info("afterProjectsRead");
-
         if (!JGitverUtils.shouldSkip(mavenSession)) {
             File projectBaseDir = mavenSession.getCurrentProject().getBasedir();
-            logger.debug("projectBaseDir: " + projectBaseDir.getAbsolutePath());
-            try {
+                try {
                 if (projectBaseDir != null
                     && !configurationProvider.ignore(new File(projectBaseDir, "pom.xml"))) {
                     final Consumer<? super CharSequence> c = cs -> logger.warn(cs.toString());
 
-                    /*
                     if (JGitverModelProcessor.class.isAssignableFrom(modelProcessor.getClass())) {
 
+                        // note: this will fail if, by config, all modules are excluded
                         if (!mavenSession
                             .getUserProperties()
                             .containsKey(JGitverUtils.SESSION_MAVEN_PROPERTIES_KEY)) {
@@ -188,25 +180,31 @@ public class JGitverExtension extends AbstractMavenLifecycleParticipant {
                         logger.error("JgitverModelProcessor model processor not assignable from " + modelProcessor.getClass());
                         JGitverUtils.failAsOldMechanism(c);
                     }
-                    */
+                    
+                    String setVersionAsProperty = configurationProvider.getSetVersionAsProperty();
+                    
                     sessionHolder
                         .session()
                         .ifPresent(
                             jgitverSession -> {
-                                logger.info("jgitver-maven-plugin is about to change project(s) version(s)");
-
+                                if (StringUtils.isBlank(setVersionAsProperty)) {
+                                  logger.info("jgitver-maven-plugin is about to change project(s) version(s)"); 
+                                  
+                                }
+                                else {
+                                  logger.info("jgitver-maven-plugin is about to set property: " + setVersionAsProperty + " to computed version(s)");
+                                }
+                                
                                 jgitverSession
-                                .getProjects()
-                                .forEach(
-                                    gav
-                                    -> logger.info(
-                                        "    "
-                                        + gav.toString()
-                                        + " -> "
-                                        + jgitverSession.getVersion()));
+                                      .getProjects()
+                                      .forEach(
+                                        gav
+                                        -> logger.info(
+                                          "    "
+                                          + gav.toString()
+                                          + " -> "
+                                          + jgitverSession.getVersion()));
                             });
-                } else {
-                    logger.debug("configurationProvider says ignore");
                 }
             } catch (IOException ex) {
                 new MavenExecutionException(
