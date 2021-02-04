@@ -140,6 +140,8 @@ public class JGitverModelProcessor extends DefaultModelProcessor {
           if (StringUtils.isBlank(propertyForVersion)) {
               if (Objects.nonNull(model.getVersion())) {
                   // TODO evaluate how to set the version only when it was originally set in the pom file
+                  logger.info("setVersion " + location + " -> " + calculatedVersion);
+    
                   model.setVersion(calculatedVersion);
               }
 
@@ -153,6 +155,8 @@ public class JGitverModelProcessor extends DefaultModelProcessor {
                   if (StringUtils.isNotBlank(modelParentRelativePath)
                     && StringUtils.containsIgnoreCase(
                       relativePathParent.getCanonicalPath(), multiModuleDirectory.getCanonicalPath())) {
+                      logger.info("setVersion " + relativePathParent.getCanonicalPath() + " -> " + calculatedVersion);
+    
                       model.getParent().setVersion(calculatedVersion);
                   }
               }
